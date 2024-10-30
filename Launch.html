@@ -1,0 +1,407 @@
+
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Générateur de Mème peyrou</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background: #f0f0f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .meme-container {
+            width: 100%;
+            aspect-ratio: 1;
+            position: relative;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            touch-action: none;
+        }
+
+        #background-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .draggable {
+            position: absolute;
+            cursor: move;
+            z-index: 2;
+            user-select: none;
+            transform-origin: center;
+        }
+
+        #cat-image {
+            width: 150px;
+            height: auto;
+            position: absolute;
+            z-index: 2;
+            cursor: move;
+            user-select: none;
+            transform-origin: center;
+        }
+
+        .draggable-text {
+            position: absolute;
+            color: white;
+            text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: move;
+            z-index: 3;
+            user-select: none;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .accessory {
+            position: absolute;
+            font-size: 40px;
+            z-index: 3;
+            cursor: move;
+        }
+
+        .element-controls {
+            display: flex;
+            gap: 5px;
+            margin: 5px 0;
+        }
+
+        .control-btn {
+            padding: 8px 12px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .bg-upload-btn {
+            width: 100%;
+            padding: 12px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            margin: 5px 0;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .bg-upload-btn input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin: 5px 0;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 12px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            margin: 5px 0;
+            cursor: pointer;
+        }
+
+        .save-btn {
+            background: #2196F3;
+        }
+
+        .accessories {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin: 15px 0;
+        }
+
+        .accessory-btn {
+            padding: 15px;
+            font-size: 24px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .tabs {
+            display: flex;
+            margin: 15px 0;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 16px;
+        }
+
+        .tab.active {
+            border-bottom: 2px solid #4CAF50;
+            margin-bottom: -2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Générateur de Mèmes Chat</h1>
+        
+        <div class="meme-container" id="meme-container">
+            <img id="background-image" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100' height='100' fill='%23f0f0f0'/></svg>" alt="Arrière-plan">
+            <img id="cat-image" src="https://i.ibb.co/wcHVssJ/Mp.png" alt="Chat" class="draggable">
+        </div>
+
+        <div class="element-controls">
+            <button class="control-btn" onclick="rotateElement('left')">⟲ Rotation</button>
+            <button class="control-btn" onclick="rotateElement('right')">⟳ Rotation</button>
+            <button class="control-btn" onclick="scaleElement(1.1)">+ Taille</button>
+            <button class="control-btn" onclick="scaleElement(0.9)">- Taille</button>
+        </div>
+
+        <div class="text-controls">
+            <input type="text" id="text-input" placeholder="Votre texte">
+            <button class="action-btn" onclick="addDraggableText()">Ajouter Texte</button>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('backgrounds')">Arrière-plans</button>
+            <button class="tab" onclick="showTab('accessories')">Accessoires</button>
+        </div>
+
+        <div id="backgrounds-tab">
+            <div class="background-selector">
+                <div class="bg-upload-btn">
+                    Choisir une image de fond
+                    <input type="file" id="bg-upload" accept="image/*" onchange="handleBackgroundUpload(event)">
+                </div>
+            </div>
+        </div>
+
+        <div id="accessories-tab" style="display: none;">
+            <div class="accessories">
+                <button class="accessory-btn" onclick="addAccessory('🎩')">🎩</button>
+                <button class="accessory-btn" onclick="addAccessory('👓')">👓</button>
+                <button class="accessory-btn" onclick="addAccessory('🎀')">🎀</button>
+                <button class="accessory-btn" onclick="addAccessory('👑')">👑</button>
+                <button class="accessory-btn" onclick="addAccessory('🎭')">🎭</button>
+                <button class="accessory-btn" onclick="addAccessory('🎪')">🎪</button>
+                <button class="accessory-btn" onclick="addAccessory('🌈')">🌈</button>
+                <button class="accessory-btn" onclick="addAccessory('⭐')">⭐</button>
+                <button class="accessory-btn" onclick="addAccessory('🌺')">🌺</button>
+                <button class="accessory-btn" onclick="addAccessory('🎵')">🎵</button>
+                <button class="accessory-btn" onclick="addAccessory('💖')">💖</button>
+                <button class="accessory-btn" onclick="addAccessory('🦋')">🦋</button>
+                <button class="accessory-btn" onclick="addAccessory('🌙')">🌙</button>
+                <button class="accessory-btn" onclick="addAccessory('☁️')">☁️</button>
+                <button class="accessory-btn" onclick="addAccessory('🎮')">🎮</button>
+                <button class="accessory-btn" onclick="addAccessory('📱')">📱</button>
+            </div>
+        </div>
+
+        <button class="action-btn save-btn" onclick="saveMeme()">Enregistrer le mème</button>
+        <button class="action-btn" onclick="resetMeme()">Tout effacer</button>
+    </div>
+
+    <script>
+        let activeElement = null;
+        let startX = 0;
+        let startY = 0;
+        
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelector(`[onclick="showTab('${tabName}')"]`).classList.add('active');
+            
+            document.getElementById('backgrounds-tab').style.display = tabName === 'backgrounds' ? 'block' : 'none';
+            document.getElementById('accessories-tab').style.display = tabName === 'accessories' ? 'block' : 'none';
+        }
+
+        function handleBackgroundUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('background-image').src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function rotateElement(direction) {
+            if (!activeElement) return;
+            
+            const currentTransform = activeElement.style.transform || 'rotate(0deg)';
+            const currentRotation = parseInt(currentTransform.match(/rotate\((-?\d+)deg\)/) ?.[1] || 0);
+            const newRotation = direction === 'left' ? currentRotation - 15 : currentRotation + 15;
+            
+            const currentScale = currentTransform.match(/scale\(([\d.]+)\)/) ?.[1] || 1;
+            activeElement.style.transform = `rotate(${newRotation}deg) scale(${currentScale})`;
+        }
+
+        function scaleElement(factor) {
+            if (!activeElement) return;
+            
+            const currentTransform = activeElement.style.transform || 'scale(1)';
+            const currentScale = parseFloat(currentTransform.match(/scale\(([\d.]+)\)/) ?.[1] || 1);
+            const newScale = currentScale * factor;
+            
+            const currentRotation = currentTransform.match(/rotate\((-?\d+)deg\)/) ?.[1] || 0;
+            activeElement.style.transform = `rotate(${currentRotation}deg) scale(${newScale})`;
+        }
+
+        function addDraggableText() {
+            const text = document.getElementById('text-input').value;
+            if (!text) return;
+
+            const textElement = document.createElement('div');
+            textElement.className = 'draggable-text draggable';
+            textElement.textContent = text;
+            textElement.style.left = '50%';
+            textElement.style.top = '50%';
+            textElement.style.transform = 'scale(1)';
+
+            setupDraggable(textElement);
+            document.querySelector('.meme-container').appendChild(textElement);
+            document.getElementById('text-input').value = '';
+        }
+
+        function addAccessory(emoji) {
+            const accessory = document.createElement('div');
+            accessory.className = 'accessory draggable';
+            accessory.textContent = emoji;
+            accessory.style.left = '50%';
+            accessory.style.top = '50%';
+            accessory.style.transform = 'scale(1)';
+
+            setupDraggable(accessory);
+            document.querySelector('.meme-container').appendChild(accessory);
+        }
+
+        function setupDraggable(element) {
+            element.addEventListener('mousedown', startDragging);
+            element.addEventListener('touchstart', startDragging, { passive: false });
+        }
+
+        function startDragging(e) {
+            e.preventDefault();
+            activeElement = this;
+
+            if (e.type === 'mousedown') {
+                startX = e.clientX - activeElement.offsetLeft;
+                startY = e.clientY - activeElement.offsetTop;
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('mouseup', stopDragging);
+            } else {
+                startX = e.touches[0].clientX - activeElement.offsetLeft;
+                startY = e.touches[0].clientY - activeElement.offsetTop;
+                document.addEventListener('touchmove', drag, { passive: false });
+                document.addEventListener('touchend', stopDragging);
+            }
+        }
+
+        function drag(e) {
+            e.preventDefault();
+            if (!activeElement) return;
+
+            let clientX, clientY;
+            if (e.type === 'mousemove') {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            } else {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            }
+
+            activeElement.style.left = (clientX - startX) + 'px';
+            activeElement.style.top = (clientY - startY) + 'px';
+        }
+
+        function stopDragging() {
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', stopDragging);
+            document.removeEventListener('touchmove', drag);
+            document.removeEventListener('touchend', stopDragging);
+        }
+
+        function resetMeme() {
+            const container = document.querySelector('.meme-container');
+            const bgImage = document.getElementById('background-image');
+            const catImage = document.getElementById('cat-image');
+            
+            Array.from(container.children).forEach(child => {
+                if (child !== bgImage && child !== catImage) {
+                    container.removeChild(child);
+                }
+            });
+
+            catImage.style.transform = 'scale(1)';
+            catImage.style.left = '50%';
+            catImage.style.top = '50%';
+
+            bgImage.src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100' height='100' fill='%23f0f0f0'/></svg>";
+        }
+
+        function saveMeme() {
+            html2canvas(document.querySelector('.meme-container'), {
+                useCORS: true,
+                allowTaint: true,
+                scrollX: 0,
+                scrollY: 0,
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'mon-meme-chat.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+
+        setupDraggable(document.getElementById('cat-image'));
+    </script>
+</body>
+</html>
+
+
